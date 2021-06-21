@@ -1,0 +1,55 @@
+#import numpy as np
+import os
+import numpy as np
+#import cv2 as cv
+
+from PIL import Image
+
+from torch.utils.data import Dataset
+
+#from torchvision.transforms import ToTensor, ToPILImage
+
+class DefectsDataset(Dataset):
+    
+     
+    def __init__(self, image_dir, mask_dir, co_transform=None):
+        self.image_dir = image_dir
+        self.mask_dir = mask_dir
+        self.co_transform = co_transform
+        self.images = os.listdir(image_dir)
+        #print (self.images [83:])
+
+    def __len__(self):
+        return len(self.images) 
+
+    def __getitem__(self, index):
+        img_path = os.path.join(self.image_dir, self.images[index])
+        mask_path = os.path.join(self.mask_dir, self.images[index].replace(".jpg", "gt.jpg"))
+        #print (mask_path)
+        #print (img_path)   
+        
+        image = np.array(Image.open(img_path).convert("RGB"))
+        mask = np.array(Image.open(mask_path).convert("L"), dtype=np.float32)
+        #mask[mask >= 200.0] = 1.0 # With the gool to only have two pixel values (0-black, 1-wite). I have estabished a higth value, 200 in a 0-255 scale in order to detect more easily the corrosion parts (adjust this in order to obtain better results)
+        #mask[mask < 200.0] = 0.0
+        
+        #Convert the numpy array to PIL image
+        image = Image.fromarray(image)
+        mask = Image.fromarray(mask)
+        mask = mask.convert('1')
+        
+        #train_image = Image.open(train_img_path).convert("RGB")
+        #train_mask = Image.open(train_mask_path).convert("L")
+        #val_image = Image.open(val_img_path).convert("RGB")
+        #val_mask = Image.open(val_mask_path).convert("L")  
+        #print (train_image)            
+        #train_image = image [:83]
+        #train_mask = mask [:83]
+        #val_image = image [83:]
+        #val_mask = mask [83:]
+        
+        
+        if self.co_transform is not None:
+            image,mask = self.co_transform(image, mask)   
+        
+        return image, mask
